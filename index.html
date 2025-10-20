@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Peta Informasi Negara Dunia</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+    text-align: center;
+  }
+  h2 {
+    margin: 20px 0;
+  }
+  #map {
+    width: 90%;
+    max-width: 1200px;
+    margin: auto;
+  }
+  svg {
+    width: 100%;
+    height: auto;
+  }
+  .country {
+    fill: #cfd8dc;
+    stroke: #333;
+    stroke-width: 0.5;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .country:hover {
+    fill: #90caf9;
+  }
+  .tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    pointer-events: none;
+    display: none;
+  }
+  .popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    width: 300px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    display: none;
+    z-index: 1000;
+  }
+  .popup img {
+    width: 80px;
+    height: auto;
+    margin: 10px 0;
+  }
+  .popup button {
+    background: #f44336;
+    border: none;
+    padding: 8px 15px;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+  <h2>Peta Informasi Negara Dunia</h2>
+  <div id="map"></div>
+  <div class="tooltip" id="tooltip"></div>
+  <div class="popup" id="popup">
+    <h3 id="countryName"></h3>
+    <img id="countryFlag" src="" alt="Flag">
+    <p><b>Ibukota:</b> <span id="countryCapital"></span></p>
+    <p><b>Benua:</b> <span id="countryContinent"></span></p>
+    <button onclick="closePopup()">Tutup</button>
+  </div>
+
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script src="https://unpkg.com/topojson@3"></script>
+  <script>
+    const tooltip = document.getElementById("tooltip");
+    const popup = document.getElementById("popup");
+    const countryName = document.getElementById("countryName");
+    const countryFlag = document.getElementById("countryFlag");
+    const countryCapital = document.getElementById("countryCapital");
+    const countryContinent = document.getElementById("countryContinent");
+
+    const width = 960;
+    const height = 500;
+
+    const svg = d3.select("#map").append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const projection = d3.geoMercator()
+      .scale(150)
+      .translate([width / 2, height / 1.5]);
+
+    const path = d3.geoPath().projection(projection);
+
+    // Contoh data negara (bisa ditambah lengkap)
+    const countryData = {
+      "Indonesia": {capital: "Jakarta", continent: "Asia", flag: "https://flagcdn.com/w320/id.png"},
+      "United States": {capital: "Washington, D.C.", continent: "Amerika Utara", flag: "https://flagcdn.com/w320/us.png"},
+      "France": {capital: "Paris", continent: "Eropa", flag: "https://flagcdn.com/w320/fr.png"}
+    };
+
+    d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(world => {
+      const countries = topojson.feature(world, world.objects.countries).features;
+
+      svg.selectAll(".country")
+        .data(countries)
+        .enter().append("path")
+        .attr("class", "country")
+        .attr("d", path)
+        .on("mousemove", function(event, d) {
+          const countryNameText = d.properties.name;
+          tooltip.style.display = "block";
+          tooltip.style.left = (event.pageX + 10) + "px";
+          tooltip.style.top = (event.pageY - 20) + "px";
+          tooltip.innerHTML = countryNameText;
+        })
+        .on("mouseout", function() {
+          tooltip.style.display = "none";
+        })
+        .on("click", function(event, d) {
+          const name = d.properties.name;
+          if (countryData[name]) {
+            countryName.textContent = name;
+            countryFlag.src = countryData[name].flag;
+            countryCapital.textContent = countryData[name].capital;
+            countryContinent.textContent = countryData[name].continent;
+            popup.style.display = "block";
+          } else {
+            countryName.textContent = name;
+            countryFlag.src = "";
+            countryCapital.textContent = "Tidak tersedia";
+            countryContinent.textContent = "Tidak tersedia";
+            popup.style.display = "block";
+          }
+        });
+    });
+
+    function closePopup() {
+      popup.style.display = "none";
+    }
+  </script>
+</body>
+</html>
